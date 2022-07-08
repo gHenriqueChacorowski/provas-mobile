@@ -11,6 +11,7 @@ import Login from './src/screens/Login';
 import InicioScreen from './src/screens/Inicio';
 import RealizarProvaScreen from './src/screens/RealizarProva';
 import VisualizarProvaScreen from './src/screens/VisualizarProva';
+import ProvaScreen from './src/screens/Prova';
 import LoginTokenScreen from './src/screens/LoginToken';
 
 const Stack = createStackNavigator();
@@ -22,6 +23,7 @@ function HomeStack() {
       <Drawer.Screen name="Inicio" component={InicioScreen} />
       <Drawer.Screen name="VisualizarProva" component={VisualizarProvaScreen} />
       <Drawer.Screen name="RealizarProva" component={RealizarProvaScreen} />
+      <Drawer.Screen name="Prova" component={ProvaScreen} />
     </Drawer.Navigator>
   )
 }

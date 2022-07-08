@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-community/async-storage";
 import { useNavigation } from "@react-navigation/core";
 import { Context, Provider } from "../context/authContext";
+import api from '../services/api';
 
 export default function LoginToken() {
   const { setIsLogged, setIsLoggedToken } = useContext(Context);
@@ -18,12 +19,16 @@ export default function LoginToken() {
       const token = await AsyncStorage.getItem("token");
       const lembrar = await AsyncStorage.getItem("lembrar");
 
-      if (token && lembrar == 'true') {
-        setIsLogged(true);
-        return;
-      } else if (token && lembrar == 'false') {
-        removeInfoState();
-      } 
+      if (token) {
+        api.defaults.headers['Authorization'] = `Bearer ${token}`;
+
+        if (lembrar == 'true') {
+          setIsLogged(true);
+          return;
+        } else if (lembrar == 'false') {
+          removeInfoState();
+        }
+      }
 
       setIsLogged(false);
       setIsLoggedToken(true);

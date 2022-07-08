@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react'
 import { View, Text, Image, StyleSheet } from 'react-native'
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faSignOutAlt, faGraduationCap, faPhoneAlt } from '@fortawesome/free-solid-svg-icons'
+import { faSignOutAlt, faGraduationCap, faPhoneAlt, faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import AsyncStorage from '@react-native-community/async-storage';
 import { useNavigation } from '@react-navigation/core'
 import { Context } from '../context/authContext'
@@ -55,6 +55,16 @@ export default function CustomDrawer(props) {
           <View style={{ flexDirection: "row", marginBottom: 17 }}>
             <FontAwesomeIcon style={stylesDrawer.iconItem} icon={faGraduationCap} />
             <Text style={stylesDrawer.textItem}>Alunos</Text>
+          </View>
+          
+          <View style={{ flexDirection: "row", marginBottom: 15 }}>
+            <FontAwesomeIcon style={stylesDrawer.iconSubItem} icon={faArrowRight} />
+            <Text style={stylesDrawer.textSubItem} onPress={() => navigation.navigate('VisualizarProva')}>Minhas Provas</Text>
+          </View>
+
+          <View style={{ flexDirection: "row", marginBottom: 15 }}>
+            <FontAwesomeIcon style={stylesDrawer.iconSubItem} icon={faArrowRight} />
+            <Text style={stylesDrawer.textSubItem} onPress={() => navigation.navigate('RealizarProva')}>Realizar Provas</Text>
           </View>
 
           <Text style={stylesDrawer.titleItems}>Contato</Text>
@@ -114,9 +124,20 @@ const stylesDrawer = StyleSheet.create({
     marginLeft: 10, 
     fontSize: 17
   },
+  textSubItem: {
+    color: "#fff",
+    marginLeft: 10,
+    fontSize: 15,
+    marginTop: 0
+  },
   iconItem: {
     color: "#fff", 
     marginLeft: 14, 
+    marginTop: 4
+  },
+  iconSubItem: {
+    color: "#fff", 
+    marginLeft: 20,
     marginTop: 4
   }
 });

@@ -65,8 +65,9 @@ const logar = (dispatch) => {
         .post("/login", { login, senha, redeSocial: null })
         .then(async res => {
           if (res.data.token) {
-            dispatch({type: "credentialsError", payload: null})
-  
+            dispatch({type: "credentialsError", payload: null});
+            api.defaults.headers['Authorization'] = `Bearer ${res.data.token}`;
+
             await AsyncStorage.setItem("token", res.data.token);
             await AsyncStorage.setItem("lembrar", JSON.stringify(lembrar));
             await AsyncStorage.setItem("usuario", JSON.stringify(res.data.usuario));

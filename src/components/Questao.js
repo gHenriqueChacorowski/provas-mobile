@@ -5,16 +5,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-community/async-storage';
 import Alternativa from './Alternativa';
 import Discursiva from './Discursiva';
+import ConteudoQuestao from './ConteudoQuestao';
 
 export default function Questao(props) {
   const [questao, setQuestao] = useState([]);
+  const [alunoId, setAlunoId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [anulada, setAnulada] = useState(null);
   const [ordem, setOrdem] = useState(null);
+  const [nota, setNota] = useState(null);
 
   useEffect(() => {
     const getQuestao = async () => {
       const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
+      setAlunoId(usuario.id);
       await api
         .get(`questao/by/provaId/questaoId/aplicacaoProvaId/alunoId/${props.provaId}/${props.questaoId}/${props.aplicacaoProvaId}/${usuario.id}`)
         .then(res => {
@@ -27,7 +31,6 @@ export default function Questao(props) {
     }
 
     if (props) {
-      console.log('if do props');
       getQuestao();
     }
   }, [props.questaoId, props.provaId]);
@@ -37,6 +40,13 @@ export default function Questao(props) {
   }
   return (
     <SafeAreaView style={{ backgroundColor: '#FFFFFF' }}>
+      <ConteudoQuestao 
+        questaoId={questao.id} 
+        titulo={questao.titulo} 
+        respostaEsperada={questao.respostaEsperada} 
+        nota={nota} 
+        ordem={props.questaoAtual ? props.questaoAtual : questao.ordem} 
+      />
       {
         questao.tipoId != 6
         ?
@@ -47,7 +57,8 @@ export default function Questao(props) {
           tipoId={questao.tipoId} 
           aplicacaoProvaId={props.aplicacaoProvaId} 
           provaId={props.provaId}
-          ordem={props.questaoAtual ? props.questaoAtual : ordem}  
+          ordem={props.questaoAtual ? props.questaoAtual : ordem}
+          alunoId={alunoId}  
         />
         :
         <Discursiva 

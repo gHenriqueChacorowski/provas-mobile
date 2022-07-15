@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -65,10 +65,12 @@ export default function Questoes(props) {
   }
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#D8DBDE' }}>
-      <View style={{ paddingTop: 70, paddingLeft: 10, paddingRight: 20, paddingBottom: 20 }}>
-        <Text style={{ fontSize: 25, fontWeight: 'bold', color: '#1d1e1c', marginBottom: 15 }}>Questoes</Text>
-        <Questao provaId={aplicacaoProva.provaId} aplicacaoProvaId={aplicacaoProva.id} questaoId={questoes[questaoAtual].questaoId} questaoAtual={questaoAtual + 1} />
-      </View>
+      <ScrollView>
+        <View style={{ paddingTop: 70, paddingLeft: 10, paddingRight: 20, paddingBottom: 175 }}>
+          <Text style={{ fontSize: 25, fontWeight: 'bold', color: '#1d1e1c', marginBottom: 15 }}>Questoes</Text>
+          <Questao provaId={aplicacaoProva.provaId} aplicacaoProvaId={aplicacaoProva.id} questaoId={questoes[questaoAtual].questaoId} questaoAtual={questaoAtual + 1} />
+        </View>
+      </ScrollView>
       <View style={styles.headerbarBottomQuestoes}>
         <View style={styles.headerBottomItens}>
           <View>

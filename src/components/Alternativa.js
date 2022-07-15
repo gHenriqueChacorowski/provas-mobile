@@ -1,59 +1,92 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, TextInput } from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-community/async-storage';
 import TipoQuestaoEnum from '../enum/TipoQuestaoEnum';
-import RadioForm, {RadioButton, RadioButtonInput, RadioButtonLabel} from 'react-native-simple-radio-button';
+import Radio from './Radio';
+import CheckBox from '@react-native-community/checkbox';
+import RenderHtml from 'react-native-render-html';
 
 export default function Alternativa(props) {
   const [questao, setQuestao] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [pesoString, setPesoString] = useState(["01", "02", "04", "08", "16"]);
-  const [peso, setPeso] = useState([1, 2, 4, 8, 16]);
-  const [opcoesAlternativas, setOpcoesAlternativas] = useState(["A) ","B) ","C) ","D) ","E) ","F) ","G) ","H) ","I) ","J) ","K) ","L) ","M) ","N) ","O) "]);
-  const [opcaoMarcada, setOpcaoMarcada] = useState(null);
+  const [opcaoMarcada, setOpcaoMarcada] = useState(0);
+  const [somatoria, setSomatoria] = useState(0);
+  const peso = [1, 2, 4, 8, 16];
+  const pesoString = ["01", "02", "04", "08", "16"];
+  let { width } = useWindowDimensions();
 
+  const salvarAlternativaQuestao = async (index) => {
+    let alternativaResposta = {
+      questaoId: props.questaoId,
+      alunoId: props.alunoId,
+      aplicacaoProvaId: props.aplicacaoProvaId
+    }
+
+    if (props.tipoId == TipoQuestaoEnum.PERGUNTA_MULTIPLA_ESCOLHA || props.tipoId == TipoQuestaoEnum.PERGUNTA_MULTIPLA_ESCOLHA_PERCENTUAL) {
+      const textoAlternativa = props.alternativas.find((alt) => {
+        return alt.id == props.alternativas[index].id
+      })
+
+      alternativaResposta = {
+        ...alternativaResposta,
+        alternativaQuestaoId: props.alternativas[index].id,
+        textoAlternativa: textoAlternativa.descricao
+      }
+    }
+    
+    console.log(alternativaResposta);
+    await api
+      .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
+      .then(res => {
+        console.log('salvo com sucesso');
+      })
+      .catch(err => console.log(err));
+  }
+  
   useEffect(() => {
   }, [props]);
 
-  // if (isLoading) {
-  //   return <View><Text>Loading...</Text></View>
-  // }
   return (
     <SafeAreaView style={{ backgroundColor: '#FFFFFF' }}>
-      <ScrollView>
-        {
-          props.tipoId == TipoQuestaoEnum.PERGUNTA_MULTIPLA_ESCOLHA ||
-          props.tipoId == TipoQuestaoEnum.PERGUNTA_MULTIPLA_ESCOLHA_PERCENTUAL
-          ?
-            <View>
-              {
-                props.alternativas.map((value, key) => {
-                  return (
-                    <View key={key}>
-                      <RadioForm
-                        radio_props={[{label: value.descricao, value: value.id }]}
-                        initial={0}
-                        onPress={(value) => {setOpcaoMarcada(value)}}
-                      />
-                    </View>
-                  )
-                })
-              }
+      {
+        props.tipoId == TipoQuestaoEnum.PERGUNTA_MULTIPLA_ESCOLHA ||
+        props.tipoId == TipoQuestaoEnum.PERGUNTA_MULTIPLA_ESCOLHA_PERCENTUAL
+        ?
+          <Radio
+            opcoes={props.alternativas}
+            onChangeOpcaoSelecionada={(opt, idx) => {
+              setOpcaoMarcada(idx);
+              salvarAlternativaQuestao(idx);
+            }}
+            opcaoSelecionada={opcaoMarcada}
+          />
+        :
+          <View>
+            {
+              props.alternativas.map((value, key) => {
+                let descricao = value.descricao.replace('<p><br></p>', '');
+                return (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', width: width - 95 }}>
+                    <CheckBox />
+                    <Text>{pesoString[key]})  </Text>
+                    <RenderHtml source={{ html: descricao }} contentWidth={ width } />
+                  </View>
+                )
+              })
+            }
+            <View style={{marginLeft: 7, paddingBottom: 10}}>
+              <Text>Total:</Text>
+              <TextInput
+                style={{borderWidth: 1, borderRadius: 2, width: 50, height: 40, color: '#000'}}
+                value={somatoria.toString()}
+                editable={false}
+                keyboardType="numeric"
+              />
             </View>
-          :
-            <View>
-              {
-                props.alternativas.map((value, key) => {
-                  return (
-                    <View><Text>Somatória...</Text></View>
-                  )
-                })
-              }
-            </View>
-        }
-      </ScrollView>
+          </View>
+      }
     </SafeAreaView>
   )
 }

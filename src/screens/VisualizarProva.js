@@ -37,16 +37,24 @@ export default function VisualizarProva() {
       <View style={{ paddingTop: 70, paddingLeft: 10, paddingRight: 20, paddingBottom: 20 }}>
         <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#1d1e1c' }}>Visualizar Prova</Text>
       </View>
-      <View>
-        <Table style={{ margin: 10 }}>
-          <Row data={tableHead} widthArr={widthArr} />
-          {
-            provas.map((value, key) => {
-              return <Rows key={key} widthArr={widthArr} style={{ backgroundColor: '#FCFCFC', borderWidth: 1, borderLeftWidth: 0, borderRightWidth: 0, borderColor: '#eee', paddingTop: 5, paddingBottom: 5 }} data={[[value.descricao, value.nomeProva, value.nota]]} />
-            })
-          }
-        </Table>
-      </View>
+      {
+        provas.length > 0
+        ?
+        <View>
+          <Table style={{ margin: 10 }}>
+            <Row data={tableHead} widthArr={widthArr} />
+            {
+              provas.map((value, key) => {
+                return <Rows key={key} widthArr={widthArr} style={{ backgroundColor: '#FCFCFC', borderWidth: 1, borderLeftWidth: 0, borderRightWidth: 0, borderColor: '#eee', paddingTop: 5, paddingBottom: 5 }} data={[[value.descricao, value.nomeProva, value.nota]]} />
+              })
+            }
+          </Table>
+        </View>
+        :
+        <View style={{ paddingLeft: 10 }}>
+          <Text style={{ fontSize: 15 }}>Nenhuma prova disponível para visualização.</Text>
+        </View>
+      }
     </SafeAreaView>
   )
 }

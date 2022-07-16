@@ -11,7 +11,7 @@ import RenderHtml from 'react-native-render-html';
 export default function Alternativa(props) {
   const [questao, setQuestao] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [opcaoMarcada, setOpcaoMarcada] = useState(0);
+  const [alternativaSelecionadaId, setAlternativaSelecionadaId] = useState(null);
   const [somatoria, setSomatoria] = useState(0);
   const peso = [1, 2, 4, 8, 16];
   const pesoString = ["01", "02", "04", "08", "16"];
@@ -35,8 +35,7 @@ export default function Alternativa(props) {
         textoAlternativa: textoAlternativa.descricao
       }
     }
-    
-    console.log(alternativaResposta);
+
     await api
       .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
       .then(res => {
@@ -44,8 +43,29 @@ export default function Alternativa(props) {
       })
       .catch(err => console.log(err));
   }
-  
+
   useEffect(() => {
+    const getRespostaQuestao = async () => {
+      await api
+        .get(`respostaAlunoProva/${props.alunoId}/${props.aplicacaoProvaId}/${props.questaoId}`)
+        .then(res => {
+          if (res.data && res.data.length > 0) {
+            if (res.data[0].somatoria == null && res.data[0].resposta == null) {
+              let alternativaSelecionadaId = res.data.map((rs) => {
+                return rs.alternativaRespostaAlunoProva[0] ? rs.alternativaRespostaAlunoProva[0].alternativaQuestaoId : null;
+              })
+              setAlternativaSelecionadaId(alternativaSelecionadaId);
+            } else if (res.data[0].somatoria != null) {
+              //Somatória
+            }
+          }
+        })
+        .catch(err => console.log(err));
+    }
+
+    if (props.questaoId && props.alunoId && props.aplicacaoProvaId) {
+      getRespostaQuestao();
+    }
   }, [props]);
 
   return (
@@ -57,10 +77,10 @@ export default function Alternativa(props) {
           <Radio
             opcoes={props.alternativas}
             onChangeOpcaoSelecionada={(opt, idx) => {
-              setOpcaoMarcada(idx);
+              setAlternativaSelecionadaId(opt.id);
               salvarAlternativaQuestao(idx);
             }}
-            opcaoSelecionada={opcaoMarcada}
+            opcaoSelecionada={alternativaSelecionadaId}
           />
         :
           <View>

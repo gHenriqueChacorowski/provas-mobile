@@ -64,10 +64,11 @@ export default function Questao(props) {
         <Discursiva 
           questaoId={questao.id} 
           tituloQuestao={questao.titulo} 
-          tipoid={questao.tipoId} 
+          tipoId={questao.tipoId} 
           aplicacaoProvaId={props.aplicacaoProvaId} 
           provaId={props.provaId}
           ordem={props.questaoAtual ? props.questaoAtual : ordem}  
+          alunoId={alunoId}
         />
       }
     </SafeAreaView>

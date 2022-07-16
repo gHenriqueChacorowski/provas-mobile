@@ -5,9 +5,7 @@ import api from '../services/api';
 import RenderHtml from 'react-native-render-html';
 
 export default function ConteudoQuestao(props) {
-  const [questao, setQuestao] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [resposta, setResposta] = useState(null);
   const [temaQuestao, setTemaQuestao] = useState({});
   let { width } = useWindowDimensions();
 

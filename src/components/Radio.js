@@ -23,7 +23,7 @@ export default function Radio({ opcoes = [], onChangeOpcaoSelecionada, opcaoSele
               key={index}
             >
               <View style={stylesRadio.circle}>
-                {opcaoSelecionada == index && <View style={stylesRadio.opcaoSelecionada} />}
+                {opcaoSelecionada == value.id && <View style={stylesRadio.opcaoSelecionada} />}
               </View>
               <Text style={{ marginBottom: 2}}> {opcoesAlternativas[index]} </Text>
               <RenderHtml source={{ html: descricao }} contentWidth={ width } />

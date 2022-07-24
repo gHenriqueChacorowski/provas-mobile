@@ -59,12 +59,12 @@ export default function CustomDrawer(props) {
           
           <View style={{ flexDirection: "row", marginBottom: 15 }}>
             <FontAwesomeIcon style={stylesDrawer.iconSubItem} icon={faArrowRight} />
-            <Text style={stylesDrawer.textSubItem} onPress={() => navigation.navigate('VisualizarProva')}>Minhas Provas</Text>
+            <Text style={stylesDrawer.textSubItem} onPress={() => navigation.navigate('VisualizarProva', { reloadPage: true })}>Minhas Provas</Text>
           </View>
 
           <View style={{ flexDirection: "row", marginBottom: 15 }}>
             <FontAwesomeIcon style={stylesDrawer.iconSubItem} icon={faArrowRight} />
-            <Text style={stylesDrawer.textSubItem} onPress={() => navigation.navigate('RealizarProva')}>Realizar Provas</Text>
+            <Text style={stylesDrawer.textSubItem} onPress={() => navigation.navigate('RealizarProva', { reloadPage: true })}>Realizar Provas</Text>
           </View>
 
           <Text style={stylesDrawer.titleItems}>Contato</Text>

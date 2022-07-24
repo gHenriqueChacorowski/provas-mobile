@@ -8,7 +8,7 @@ import styles from "../styles/index";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/core'
 
-export default function RealizarProva() {
+export default function RealizarProva({ route }) {
   const [provas, setProvas] = useState([]);
   const [tableHead, setTableHead] = useState([]);
   const [widthArr, setWidthArr] = useState([]);
@@ -41,8 +41,10 @@ export default function RealizarProva() {
         .catch(err => console.log(err));
     }
 
-    getProvas();
-  }, []);
+    if (route.params.reloadPage) {
+      getProvas();
+    }
+  }, [route]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>

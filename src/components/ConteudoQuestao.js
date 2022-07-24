@@ -29,11 +29,13 @@ export default function ConteudoQuestao(props) {
     return <View><Text>Loading...</Text></View>
   }
   return (
-    <SafeAreaView style={{ backgroundColor: '#FFFFFF', margin: 5 }}>
+    <SafeAreaView style={{ backgroundColor: '#FFFFFF', margin: 5, overflow: 'hidden' }}>
       {temaQuestao && <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#1d1e1c' }}>{temaQuestao.nome}</Text>}
-      <View style={{flexDirection: 'row', width: width - 85, margin: 5 }}>
-        {props.ordem && <Text>{props.ordem}</Text>}
-        {props.titulo && <RenderHtml source={{ html: props.titulo.replace('<p><br></p>', '') }} contentWidth={ width } />}
+      <View style={{flexDirection: 'column', width: width - 85}}>
+        {props.ordem && <Text style={{fontWeight: 'bold', fontSize: 16}}>{props.ordem}</Text>}
+        <View style={{marginLeft: 5}}>
+          {props.titulo && <RenderHtml source={{ html: props.titulo.replace('<p><br></p>', '') }} contentWidth={ width } />}
+        </View>
       </View>
     </SafeAreaView>
   )

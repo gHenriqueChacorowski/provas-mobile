@@ -7,7 +7,7 @@ import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-ta
 import styles from "../styles/index";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function VisualizarProva() {
+export default function VisualizarProva({ route }) {
   const [provas, setProvas] = useState([]);
   const [tableHead, setTableHead] = useState([]);
   const [widthArr, setWidthArr] = useState([]);
@@ -29,8 +29,10 @@ export default function VisualizarProva() {
         .catch(err => console.log(err));
     }
 
-    getProvas();
-  }, []);
+    if (route.params.reloadPage) {
+      getProvas();
+    }
+  }, [route]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF' }}>

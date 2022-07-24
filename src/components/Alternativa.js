@@ -2,22 +2,21 @@ import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, TextInput } from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-community/async-storage';
 import TipoQuestaoEnum from '../enum/TipoQuestaoEnum';
 import Radio from './Radio';
-import CheckBox from '@react-native-community/checkbox';
-import RenderHtml from 'react-native-render-html';
+import CheckBoxComponent from './CheckBoxComponent';
 
 export default function Alternativa(props) {
-  const [questao, setQuestao] = useState([]);
+  const [somatoria, setSomatoria] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [alternativaSelecionadaId, setAlternativaSelecionadaId] = useState(null);
-  const [somatoria, setSomatoria] = useState(0);
+  const [alternativas, setAlternativas] = useState({});
   const peso = [1, 2, 4, 8, 16];
-  const pesoString = ["01", "02", "04", "08", "16"];
-  let { width } = useWindowDimensions();
+  const [, updateState] = React.useState();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
+  let alternativasMarcadas = [];
 
-  const salvarAlternativaQuestao = async (index) => {
+  const salvarAlternativaQuestao = async (index, somat = false, removeAlternativaSomat = false) => {
     let alternativaResposta = {
       questaoId: props.questaoId,
       alunoId: props.alunoId,
@@ -36,10 +35,61 @@ export default function Alternativa(props) {
       }
     }
 
+    if (props.tipoId == TipoQuestaoEnum.PERGUNTA_SOMATORIA) {
+      const textoAlternativa = alternativas.find((alt) => {
+        return alt.id == alternativas[index].id;
+      })
+
+      alternativaResposta = {
+        ...alternativaResposta,
+        alternativaQuestaoId: alternativas[index].id,
+        textoAlternativa: textoAlternativa.descricao,
+        somatoria: somat,
+        removeAlternativaSomatoria: removeAlternativaSomat
+      }
+    }
+
     await api
       .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
       .then(res => {
-        console.log('salvo com sucesso');
+        console.log('salvo');
+      })
+      .catch(err => console.log(err));
+  }
+
+  const checkBoxChecked = async (val, index) => {
+    let data = alternativas;
+    let som = somatoria;
+    let removeAlternativaSomat = false;
+
+    if (val.checked == true) {
+      data[index].checked = false;
+      som -= peso[index];
+      removeAlternativaSomat = true;
+    } else {
+      data[index].checked = true;
+      som += peso[index];
+      removeAlternativaSomat = false;
+    }
+    setSomatoria(som);
+    setAlternativas(data);
+    forceUpdate();
+
+    salvarAlternativaQuestao(index, som, removeAlternativaSomat);
+  }
+
+  const getAlternativasQuestao = async () => {
+    await api
+      .get(`alternativaQuestao/by/questao/${props.questaoId}`)
+      .then(res => {
+        let som = 0;
+        for (const alternativa of res.data) {
+          if (alternativasMarcadas.includes(alternativa.id)) {
+            som += alternativa.somatoria;
+          }
+        }
+        setSomatoria(som);
+        forceUpdate();
       })
       .catch(err => console.log(err));
   }
@@ -51,12 +101,27 @@ export default function Alternativa(props) {
         .then(res => {
           if (res.data && res.data.length > 0) {
             if (res.data[0].somatoria == null && res.data[0].resposta == null) {
+              console.log('nao é somatoria');
               let alternativaSelecionadaId = res.data.map((rs) => {
                 return rs.alternativaRespostaAlunoProva[0] ? rs.alternativaRespostaAlunoProva[0].alternativaQuestaoId : null;
               })
               setAlternativaSelecionadaId(alternativaSelecionadaId);
             } else if (res.data[0].somatoria != null) {
-              //Somatória
+              if (alternativas && alternativas.length !== undefined) {
+                let alt = alternativas;
+                for (const alternativa of res.data[0].alternativaRespostaAlunoProva) {
+                  alt.map((a) => {
+                    if (a.id == alternativa.alternativaQuestaoId) {
+                      a.checked = true;
+                      alternativasMarcadas.push(a.id);
+                    }
+                  })
+                }
+                setAlternativas(alt);
+                forceUpdate();
+
+                getAlternativasQuestao();
+              }
             }
           }
         })
@@ -66,8 +131,16 @@ export default function Alternativa(props) {
     if (props.questaoId && props.alunoId && props.aplicacaoProvaId) {
       getRespostaQuestao();
     }
+
+    if (props.alternativas) {
+      setAlternativas(props.alternativas);
+      setIsLoading(false);
+    }
   }, [props]);
 
+  if (isLoading) {
+    return <View><Text>Loading...</Text></View>
+  }
   return (
     <SafeAreaView style={{ backgroundColor: '#FFFFFF' }}>
       {
@@ -83,29 +156,13 @@ export default function Alternativa(props) {
             opcaoSelecionada={alternativaSelecionadaId}
           />
         :
-          <View>
-            {
-              props.alternativas.map((value, key) => {
-                let descricao = value.descricao.replace('<p><br></p>', '');
-                return (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', width: width - 95 }}>
-                    <CheckBox />
-                    <Text>{pesoString[key]})  </Text>
-                    <RenderHtml source={{ html: descricao }} contentWidth={ width } />
-                  </View>
-                )
-              })
-            }
-            <View style={{marginLeft: 7, paddingBottom: 10}}>
-              <Text>Total:</Text>
-              <TextInput
-                style={{borderWidth: 1, borderRadius: 2, width: 50, height: 40, color: '#000'}}
-                value={somatoria.toString()}
-                editable={false}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
+          <CheckBoxComponent
+            opcoes={alternativas}
+            onChangeCheckBox={(val, idx) => {
+              checkBoxChecked(val, idx);
+            }}
+            somatoria={somatoria}
+          />
       }
     </SafeAreaView>
   )

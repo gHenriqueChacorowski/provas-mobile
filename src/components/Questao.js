@@ -33,7 +33,7 @@ export default function Questao(props) {
     if (props) {
       getQuestao();
     }
-  }, [props.questaoId, props.provaId]);
+  }, [props]);
 
   if (isLoading) {
     return <View><Text>Loading...</Text></View>
@@ -52,7 +52,7 @@ export default function Questao(props) {
         ?
         <Alternativa 
           alternativas={questao.alternativas} 
-          questaoId={questao.id} 
+          questaoId={props.questaoId} 
           tituloQuestao={questao.titulo} 
           tipoId={questao.tipoId} 
           aplicacaoProvaId={props.aplicacaoProvaId} 

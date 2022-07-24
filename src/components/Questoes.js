@@ -1,20 +1,29 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView} from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import { faChevronRight, faChevronLeft } from '@fortawesome/free-solid-svg-icons'
 import Questao from './Questao';
 import AsyncStorage from "@react-native-community/async-storage";
+import AwesomeAlert from 'react-native-awesome-alerts';
+import SweetAlert from 'react-native-sweet-alert';
+import { useNavigation } from '@react-navigation/core'
 
 export default function Questoes(props) {
   const [aplicacaoProva, setAplicacaoProva] = useState([]);
   const [questaoAtual, setQuestaoAtual] = useState(0);
   const [questoes, setQuestoes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [, updateState] = React.useState();
+  const forceUpdate = React.useCallback(() => updateState({}), []);
+  const [alert, setAlert] = useState(false);
+  const [mensagemTitle, setMensagemTitle] = useState('');
+  const [mensagemSubTitle, setMensagemSubTitle] = useState('f');
+  const [usuario, setUsuario] = useState({});
+  const navigation = useNavigation();
 
   const proximaQuestao = async () => {
-    console.log('proxima questao');
     if (questaoAtual < questoes.length - 1) {
       let value = questaoAtual;
       value += 1;
@@ -23,7 +32,6 @@ export default function Questoes(props) {
   }
 
   const voltarQuestao = async () => {
-    console.log('voltar Questao'); 
     if (questaoAtual > 0) {
       let value = questaoAtual;
       value -= 1;
@@ -32,12 +40,51 @@ export default function Questoes(props) {
   }
 
   const finalizarProva = async () => {
-    console.log('Prova finalizada');
+    const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
+
+    let mensagemTitle = "";
+    let mensagemSubTitle = "";
+
+    let respostas = await api.get(`respostaAlunoProva/resposta/alunoIdAndAplicacaoProvaId/${props.aplicacaoProvaId}/${usuario.id}`).then(res => res.data);
+
+    let liberado = true;
+    if (respostas.length < questoes.length) liberado = false;
+
+    if (!liberado) {
+      mensagemTitle = "Atenção! Você não respondeu todas as questões";
+      mensagemSubTitle = "Deseja finalizar a prova assim mesmo?";
+    } else {
+      mensagemTitle = "Deseja finalizar a prova?";
+      mensagemSubTitle = "Após a confirmação você nao terá mais acesso a prova.";
+    }
+
+    setMensagemTitle(mensagemTitle);
+    setMensagemSubTitle(mensagemSubTitle);
+    setAlert(true);
+
+    forceUpdate();
+  }
+
+  const hideAlert = async () => {
+    setAlert(false);
+    forceUpdate();
+  };
+
+  const showMessageProvaFinalizada = async () => {
+    SweetAlert.showAlertWithOptions({
+      title: 'Pronto!',
+      subTitle: 'Sua prova foi salva e finalizada',
+      confirmButtonTitle: 'OK',
+      confirmButtonColor: '#000',
+      style: 'success',
+      cancellable: true
+    })
   }
 
   useEffect(() => {
     const questoesIds = async (provaId, aplicacaoProvaId) => {
       const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
+      setUsuario(usuario);
       await api
         .get(`questaoProva/by/provaId/aplicacaoProvaId/alunoId/${provaId}/${aplicacaoProvaId}/${usuario.id}`)
         .then(res => {
@@ -124,6 +171,44 @@ export default function Questoes(props) {
           }
         </View>
       </View>
+      <AwesomeAlert
+        show={alert}
+        showProgress={false}
+        title={mensagemTitle}
+        message={mensagemSubTitle}
+        closeOnTouchOutside={true}
+        closeOnHardwareBackPress={false}
+        showCancelButton={true}
+        showConfirmButton={true}
+        cancelText="Sim"
+        confirmText="Não! Ainda não"
+        confirmButtonColor="#d33"
+        cancelButtonColor="#3085d6"
+        onCancelPressed={async () => {
+          console.log('Aceitou finalizar prova');
+          hideAlert();
+          const alunoProvaInfo = {
+            aplicacaoProvaId: aplicacaoProva.id,
+            alunoId: usuario.id,
+            provaFinalizada: new Date()
+          }
+
+          await api
+            .post("alunoProva/finalizarAlunoProva", alunoProvaInfo)
+            .then(res => {
+              console.log('prova finalziada');
+              showMessageProvaFinalizada();
+              navigation.navigate('RealizarProva', { reloadPage: true })
+            })
+            .catch(err => {
+              console.log(err);
+            })       
+        }}
+        onConfirmPressed={() => {
+          console.log('Não aceitou finalizar prova');
+          hideAlert();
+        }}
+      />
     </SafeAreaView>
   )
 }

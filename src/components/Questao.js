@@ -59,6 +59,7 @@ export default function Questao(props) {
           provaId={props.provaId}
           ordem={props.questaoAtual ? props.questaoAtual : ordem}
           alunoId={alunoId}  
+          revisao={props.revisao ? props.revisao : false}
         />
         :
         <Discursiva 
@@ -69,6 +70,7 @@ export default function Questao(props) {
           provaId={props.provaId}
           ordem={props.questaoAtual ? props.questaoAtual : ordem}  
           alunoId={alunoId}
+          revisao={props.revisao ? false : props.revisao}
         />
       }
     </SafeAreaView>

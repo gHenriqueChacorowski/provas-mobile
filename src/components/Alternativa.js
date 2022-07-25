@@ -101,7 +101,6 @@ export default function Alternativa(props) {
         .then(res => {
           if (res.data && res.data.length > 0) {
             if (res.data[0].somatoria == null && res.data[0].resposta == null) {
-              console.log('nao é somatoria');
               let alternativaSelecionadaId = res.data.map((rs) => {
                 return rs.alternativaRespostaAlunoProva[0] ? rs.alternativaRespostaAlunoProva[0].alternativaQuestaoId : null;
               })
@@ -128,6 +127,9 @@ export default function Alternativa(props) {
         .catch(err => console.log(err));
     }
 
+    if (props.tipoId == TipoQuestaoEnum.PERGUNTA_SOMATORIA) {
+      setSomatoria(0);
+    }
     if (props.questaoId && props.alunoId && props.aplicacaoProvaId) {
       getRespostaQuestao();
     }
@@ -148,12 +150,13 @@ export default function Alternativa(props) {
         props.tipoId == TipoQuestaoEnum.PERGUNTA_MULTIPLA_ESCOLHA_PERCENTUAL
         ?
           <Radio
-            opcoes={props.alternativas}
+            opcoes={alternativas}
             onChangeOpcaoSelecionada={(opt, idx) => {
               setAlternativaSelecionadaId(opt.id);
               salvarAlternativaQuestao(idx);
             }}
             opcaoSelecionada={alternativaSelecionadaId}
+            disabled={props.revisao ? props.revisao : false}
           />
         :
           <CheckBoxComponent
@@ -162,6 +165,7 @@ export default function Alternativa(props) {
               checkBoxChecked(val, idx);
             }}
             somatoria={somatoria}
+            disabled={props.revisao ? props.revisao : false}
           />
       }
     </SafeAreaView>

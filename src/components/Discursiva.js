@@ -5,7 +5,7 @@ import api from '../services/api';
 import TipoQuestaoEnum from '../enum/TipoQuestaoEnum';
 
 export default function Discursiva(props) {
-  const [resposta, setResposta] = useState(null);
+  const [resposta, setResposta] = useState('');
 
   const salvarAlternativaQuestao = async (respostaQuestao) => {
     let alternativaResposta = {
@@ -24,7 +24,6 @@ export default function Discursiva(props) {
     await api
       .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
       .then(res => {
-        console.log('salvo com sucesso discursiva');
       })
       .catch(err => console.log(err));
   }
@@ -57,6 +56,8 @@ export default function Discursiva(props) {
         value={resposta}
         style={{ height:200, textAlignVertical: 'top' }}
         placeholder="Resposta"
+        editable={props.revisao}
+        selectTextOnFocus={props.revisao}
       />
     </SafeAreaView>
   )

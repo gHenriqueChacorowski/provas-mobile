@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, StyleShe
 import RenderHtml from 'react-native-render-html';
 import CheckBox from '@react-native-community/checkbox';
 
-export default function CheckBoxComponent({ opcoes = [], onChangeCheckBox, somatoria }) {
+export default function CheckBoxComponent({ opcoes = [], onChangeCheckBox, somatoria, disabled }) {
   let { width } = useWindowDimensions();
   const pesoString = ["01", "02", "04", "08", "16"];
 
@@ -20,6 +20,7 @@ export default function CheckBoxComponent({ opcoes = [], onChangeCheckBox, somat
               key={key} 
               style={{ flexDirection: 'row', alignItems: 'center', width: width - 95 }} 
               onPress={() => { onChangeCheckBox(value, key)}}
+              disabled={disabled}
             >
               <CheckBox
                 tintColors={{ true: '#428BCA'}}
@@ -27,6 +28,7 @@ export default function CheckBoxComponent({ opcoes = [], onChangeCheckBox, somat
                 onValueChange={() => {
                   onChangeCheckBox(value, key)
                 }}
+                disabled={disabled}
               />
               <Text>{pesoString[key]})  </Text>
               <RenderHtml source={{ html: descricao }} contentWidth={ width } />

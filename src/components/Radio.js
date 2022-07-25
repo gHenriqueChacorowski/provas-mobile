@@ -2,7 +2,7 @@ import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
 import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, StyleSheet } from 'react-native'
 import RenderHtml from 'react-native-render-html';
 
-export default function Radio({ opcoes = [], onChangeOpcaoSelecionada, opcaoSelecionada }) {
+export default function Radio({ opcoes = [], onChangeOpcaoSelecionada, opcaoSelecionada, disabled }) {
   const opcoesAlternativas = ["A) ","B) ","C) ","D) ","E) ","F) ","G) ","H) ","I) ","J) ","K) ","L) ","M) ","N) ","O) "];
   let { width } = useWindowDimensions();
 
@@ -21,6 +21,7 @@ export default function Radio({ opcoes = [], onChangeOpcaoSelecionada, opcaoSele
                 onChangeOpcaoSelecionada(value, index)
               }}
               key={index}
+              disabled={disabled}
             >
               <View style={stylesRadio.circle}>
                 {opcaoSelecionada == value.id && <View style={stylesRadio.opcaoSelecionada} />}

@@ -40,8 +40,6 @@ export default function Questoes(props) {
   }
 
   const finalizarProva = async () => {
-    const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
-
     let mensagemTitle = "";
     let mensagemSubTitle = "";
 
@@ -61,13 +59,10 @@ export default function Questoes(props) {
     setMensagemTitle(mensagemTitle);
     setMensagemSubTitle(mensagemSubTitle);
     setAlert(true);
-
-    forceUpdate();
   }
 
   const hideAlert = async () => {
     setAlert(false);
-    forceUpdate();
   };
 
   const showMessageProvaFinalizada = async () => {
@@ -185,7 +180,6 @@ export default function Questoes(props) {
         confirmButtonColor="#d33"
         cancelButtonColor="#3085d6"
         onCancelPressed={async () => {
-          console.log('Aceitou finalizar prova');
           hideAlert();
           const alunoProvaInfo = {
             aplicacaoProvaId: aplicacaoProva.id,
@@ -196,16 +190,15 @@ export default function Questoes(props) {
           await api
             .post("alunoProva/finalizarAlunoProva", alunoProvaInfo)
             .then(res => {
-              console.log('prova finalziada');
               showMessageProvaFinalizada();
               navigation.navigate('RealizarProva', { reloadPage: true })
             })
             .catch(err => {
+              alert('Erro ao tentar finalizar a prova!!');
               console.log(err);
             })       
         }}
         onConfirmPressed={() => {
-          console.log('Não aceitou finalizar prova');
           hideAlert();
         }}
       />

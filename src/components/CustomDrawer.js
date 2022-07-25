@@ -51,6 +51,12 @@ export default function CustomDrawer(props) {
             <Text style={stylesDrawer.textItem} onPress={() => logOut()}>Sair</Text>
           </View>
 
+          <Text style={stylesDrawer.titleItems}>Dashboard</Text>
+          <View style={{ flexDirection: "row", marginBottom: 17 }}>
+            <FontAwesomeIcon style={stylesDrawer.iconItem} icon={faGraduationCap} />
+            <Text style={stylesDrawer.textItem} onPress={() => navigation.navigate('Inicio')}>Inicio</Text>
+          </View>
+
           <Text style={stylesDrawer.titleItems}>Provas</Text>
           <View style={{ flexDirection: "row", marginBottom: 17 }}>
             <FontAwesomeIcon style={stylesDrawer.iconItem} icon={faGraduationCap} />

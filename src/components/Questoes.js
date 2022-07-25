@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView} from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert} from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -61,6 +61,25 @@ export default function Questoes(props) {
     setAlert(true);
   }
 
+  const registrarLog = async (estadoRealizacao, infoProva = null) => {
+    let descricao = null;
+    let inicioOrFim = estadoRealizacao ? "Iniciou" : "Finalizou";
+    let navegador = `${Platform.OS} ${Platform.Version}`;
+
+    if (estadoRealizacao == false || estadoRealizacao == true) descricao = `${inicioOrFim} a aplicação de prova "${infoProva.descricao}".`;
+
+    const log = {
+      aplicacaoProvaId: infoProva.aplicacaoProvaId,
+      provaId: infoProva.provaId,
+      alunoId: infoProva.alunoId,
+      descricao,
+      navegador,
+      createdAt: new Date()
+    };
+
+    await api.post('logRealizacaoProva', log);
+  }
+
   const hideAlert = async () => {
     setAlert(false);
   };
@@ -77,14 +96,22 @@ export default function Questoes(props) {
   }
 
   useEffect(() => {
-    const questoesIds = async (provaId, aplicacaoProvaId) => {
+    const questoesIds = async (provaId, aplicacaoProvaId, descricao) => {
       const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
       setUsuario(usuario);
+
+      let infoProva = {
+        provaId,
+        aplicacaoProvaId,
+        descricao,
+        alunoId: usuario.id
+      }
       await api
         .get(`questaoProva/by/provaId/aplicacaoProvaId/alunoId/${provaId}/${aplicacaoProvaId}/${usuario.id}`)
         .then(res => {
           setQuestoes(res.data);
           setIsLoading(false);
+          registrarLog(true, infoProva);
         });
     }
     const getInfoAplicacaoProva = async () => {
@@ -92,7 +119,7 @@ export default function Questoes(props) {
         .get(`prova/aplicacaoProva/${props.aplicacaoProvaId}`)
         .then(res => {
           setAplicacaoProva(res.data.aplicacaoProvas[0]);
-          questoesIds(res.data.aplicacaoProvas[0].provaId, res.data.aplicacaoProvas[0].id);
+          questoesIds(res.data.aplicacaoProvas[0].provaId, res.data.aplicacaoProvas[0].id, res.data.aplicacaoProvas[0].descricao);
         })
         .catch(err => console.log(err));
     }
@@ -190,11 +217,19 @@ export default function Questoes(props) {
           await api
             .post("alunoProva/finalizarAlunoProva", alunoProvaInfo)
             .then(res => {
+              let infoProva = {
+                provaId: aplicacaoProva.provaId,
+                aplicacaoProvaId: aplicacaoProva.id,
+                descricao: aplicacaoProva.descricao,
+                alunoId: usuario.id
+              }
+              registrarLog(false, infoProva);
+
               showMessageProvaFinalizada();
               navigation.navigate('RealizarProva', { reloadPage: true })
             })
             .catch(err => {
-              alert('Erro ao tentar finalizar a prova!!');
+              Alert('Erro ao tentar finalizar a prova!!');
               console.log(err);
             })       
         }}

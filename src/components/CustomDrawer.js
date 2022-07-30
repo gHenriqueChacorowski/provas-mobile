@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { View, Text, Image, StyleSheet } from 'react-native'
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer'
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -11,6 +11,7 @@ import { TouchableOpacity } from 'react-native-gesture-handler'
 export default function CustomDrawer(props) {
   const {setIsLogged, setIsLoggedToken, state} = useContext(Context);
   const navigation = useNavigation();
+  const [usuario, setUsuario] = useState({});
 
   const logOut = async () => {
     await AsyncStorage.removeItem("token");
@@ -21,11 +22,22 @@ export default function CustomDrawer(props) {
     setIsLoggedToken(true);
   }
 
+  useEffect(() => {
+    const getInfoUser = async () => {
+      const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
+      setUsuario(usuario);
+    }
+
+    if (props) {
+      getInfoUser();
+    }
+  }, [props]);
+
   return (
     <View style={stylesDrawer.container}>
       <DrawerContentScrollView
         {...props}
-        contentContainerStyle={{ backgroundColor: '#E4E7EA' }}>
+        contentContainerStyle={{ backgroundColor: '#fff' }}>
         <View style={{ borderBottomColor: 'gray', borderBottomWidth: 1 }}>
           <Image
             style={stylesDrawer.logoIntegrado}
@@ -37,9 +49,7 @@ export default function CustomDrawer(props) {
             style={stylesDrawer.logoUser}
             source={require('../assets/profile.jpg')}
           />
-          <TouchableOpacity>
-            <Text style={stylesDrawer.textNameUser}>Henrique Chacorowski</Text>
-          </TouchableOpacity>
+          <Text style={stylesDrawer.textNameUser}>Henrique Chacorowski</Text>
         </View>
 
         <View style={stylesDrawer.hr} />

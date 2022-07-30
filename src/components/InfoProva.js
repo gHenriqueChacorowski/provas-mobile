@@ -4,24 +4,44 @@ import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/core'
 import RenderHtml from 'react-native-render-html';
+import NetInfo from "@react-native-community/netinfo";
+import AsyncStorage from '@react-native-community/async-storage';
 
 export default function InfoProva(props) {
   const [prova, setProva] = useState([]);
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
+  const [disabled, setDisabled] = useState(true);
 
   useEffect(() => {
     const getInfoProva = async (aplicacaoProvaId) => {
+      const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
+
       await api
-      .get(`prova/aplicacaoProva/${aplicacaoProvaId}`)
-      .then(res => setProva(res.data))
+      .get(`aplicacaoProva/by/all/info/disponivel/${aplicacaoProvaId}/${usuario.id}`)
+      .then(async (res) => {
+        setProva(res.data.infoProva);
+        await AsyncStorage.setItem("infoProva", JSON.stringify(res.data.infoProva));
+        await AsyncStorage.setItem("aplicacaoProva", JSON.stringify(res.data.aplicacaoProva));
+        await AsyncStorage.setItem("questoesIds", JSON.stringify(res.data.questoesIds));
+        await AsyncStorage.setItem("questoes", JSON.stringify(res.data.questoes));
+      })
       .catch(err => console.log(err));
     }
 
     if (props.aplicacaoProvaId) {
-      getInfoProva(props.aplicacaoProvaId);
+      NetInfo.fetch().then(async (state) => {
+        if (state.isConnected == true) {
+          getInfoProva(props.aplicacaoProvaId);
+          setDisabled(true);
+        } else {
+          const provas = await AsyncStorage.getItem("infoProva").then(res => JSON.parse(res));
+          setProva(provas);
+          setDisabled(false);
+        }
+      })
     }
-  }, [props.aplicacaoProvaId]);
+  }, [props]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -45,6 +65,7 @@ export default function InfoProva(props) {
               justifyContent: "center",
               alignItems: "center",
             }}
+            disabled={disabled}
             onPress={() => navigation.navigate('Prova', { provaIniciada: true })} 
           >
             <Text

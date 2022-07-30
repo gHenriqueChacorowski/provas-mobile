@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Context, Provider } from "./src/context/authContext";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { LogBox } from 'react-native';
 
 import CustomDrawer from './src/components/CustomDrawer';
 import Login from './src/screens/Login';
@@ -17,6 +18,7 @@ import ConsultarProvaScreen from './src/screens/ConsultarProva';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
+LogBox.ignoreAllLogs();
 
 function HomeStack() {
   return (

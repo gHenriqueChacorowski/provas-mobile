@@ -7,6 +7,7 @@ import { Table, TableWrapper, Row, Rows, Col, Cols, Cell } from 'react-native-ta
 import styles from "../styles/index";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/core'
+import NetInfo from "@react-native-community/netinfo";
 
 export default function RealizarProva({ route }) {
   const [provas, setProvas] = useState([]);
@@ -22,13 +23,13 @@ export default function RealizarProva({ route }) {
       const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
       const params = {
         inicio: '2022-05-17',
-        fim: '2022-07-17',
+        fim: '2022-09-17',
         grupoConteudoId: GrupoConteudoEnum.COLEGIO_INTEGRADO
       }
 
       await api
         .get(`alunoProva/by/aluno/periodo/${usuario.id}`, { params })
-        .then(res => {
+        .then(async (res) => {
           let arrayProvas = [];
           res.data.filter(prova => {
             if (!prova.provaRealizada) {
@@ -37,12 +38,56 @@ export default function RealizarProva({ route }) {
           });
 
           setProvas(arrayProvas);
+          await AsyncStorage.setItem("provas", JSON.stringify(arrayProvas));
         })
         .catch(err => console.log(err));
     }
 
+    const salvarRealizacaoProva = async () => {
+      const respostas = await AsyncStorage.getItem("respostas").then(res => JSON.parse(res));
+      const provaFinalizada = await AsyncStorage.getItem("provaFinalizada").then(res => JSON.parse(res));
+      const logRespostas = await AsyncStorage.getItem("logRespostas").then(res => JSON.parse(res));
+
+      if (logRespostas && logRespostas.length != null) {
+        for (const log of logRespostas) {
+          await api.post('logRealizacaoProva', log);
+        }
+        await AsyncStorage.removeItem("logRespostas");
+        if (provaFinalizada && provaFinalizada != null) {
+          if (respostas && respostas != null) {
+            for (const resposta of respostas) {
+              await api
+                .post(`respostaAlunoProva/saveAlternativa`, resposta)
+                .then(res => {
+                  console.log('salvo');
+                })
+            }
+            await AsyncStorage.removeItem("respostas");
+          }
+  
+          await api
+            .post("alunoProva/finalizarAlunoProva", provaFinalizada)
+            .then(async (res) => {
+              await AsyncStorage.removeItem("provaFinalizada");
+            })
+            .catch(err => {
+              console.log(err);
+            })
+        }  
+      }
+    }
+
     if (route.params.reloadPage) {
-      getProvas();
+      NetInfo.fetch().then(async (state) => {
+        if (state.isConnected == true) {
+          await AsyncStorage.removeItem("provas");
+          getProvas();
+          salvarRealizacaoProva();
+        } else {
+          const provas = await AsyncStorage.getItem("provas").then(res => JSON.parse(res));
+          setProvas(provas);
+        }
+      })
     }
   }, [route]);
 

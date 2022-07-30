@@ -1,5 +1,5 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert} from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert, ActivityIndicator} from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
@@ -40,25 +40,40 @@ export default function Questoes(props) {
   }
 
   const finalizarProva = async () => {
-    let mensagemTitle = "";
-    let mensagemSubTitle = "";
-
-    let respostas = await api.get(`respostaAlunoProva/resposta/alunoIdAndAplicacaoProvaId/${props.aplicacaoProvaId}/${usuario.id}`).then(res => res.data);
-
-    let liberado = true;
-    if (respostas.length < questoes.length) liberado = false;
-
-    if (!liberado) {
-      mensagemTitle = "Atenção! Você não respondeu todas as questões";
-      mensagemSubTitle = "Deseja finalizar a prova assim mesmo?";
-    } else {
-      mensagemTitle = "Deseja finalizar a prova?";
-      mensagemSubTitle = "Após a confirmação você nao terá mais acesso a prova.";
+    const alunoProvaInfo = {
+      aplicacaoProvaId: aplicacaoProva.id,
+      alunoId: usuario.id,
+      provaFinalizada: new Date()
     }
 
-    setMensagemTitle(mensagemTitle);
-    setMensagemSubTitle(mensagemSubTitle);
-    setAlert(true);
+    let infoProva = {
+      provaId: aplicacaoProva.provaId,
+      aplicacaoProvaId: aplicacaoProva.id,
+      descricao: aplicacaoProva.descricao,
+      alunoId: usuario.id
+    }
+    registrarLog(false, infoProva);
+    await AsyncStorage.setItem("provaFinalizada", JSON.stringify(alunoProvaInfo));
+    navigation.navigate('RealizarProva', { reloadPage: true })
+    // let mensagemTitle = "";
+    // let mensagemSubTitle = "";
+
+    // let respostas = await api.get(`respostaAlunoProva/resposta/alunoIdAndAplicacaoProvaId/${props.aplicacaoProvaId}/${usuario.id}`).then(res => res.data);
+
+    // let liberado = true;
+    // if (respostas.length < questoes.length) liberado = false;
+
+    // if (!liberado) {
+    //   mensagemTitle = "Atenção! Você não respondeu todas as questões";
+    //   mensagemSubTitle = "Deseja finalizar a prova assim mesmo?";
+    // } else {
+    //   mensagemTitle = "Deseja finalizar a prova?";
+    //   mensagemSubTitle = "Após a confirmação você nao terá mais acesso a prova.";
+    // }
+
+    // setMensagemTitle(mensagemTitle);
+    // setMensagemSubTitle(mensagemSubTitle);
+    // setAlert(true);
   }
 
   const registrarLog = async (estadoRealizacao, infoProva = null) => {
@@ -77,7 +92,12 @@ export default function Questoes(props) {
       createdAt: new Date()
     };
 
-    await api.post('logRealizacaoProva', log);
+    let resposta = await AsyncStorage.getItem("logRespostas").then(res => JSON.parse(res));
+    if (resposta == null) resposta = [];
+
+    resposta.push(log);
+    await AsyncStorage.setItem("logRespostas", JSON.stringify(resposta));
+    // await api.post('logRealizacaoProva', log);
   }
 
   const hideAlert = async () => {
@@ -124,13 +144,42 @@ export default function Questoes(props) {
         .catch(err => console.log(err));
     }
 
-    if (props.aplicacaoProvaId) {
-      getInfoAplicacaoProva();
+    const getInfo = async () => {
+      const aplicacaoProva = await AsyncStorage.getItem("aplicacaoProva").then(res => JSON.parse(res));
+      const questoesIds = await AsyncStorage.getItem("questoesIds").then(res => JSON.parse(res));
+      const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
+
+      let infoProva = {
+        provaId: aplicacaoProva.provaId,
+        aplicacaoProvaId: aplicacaoProva.id,
+        descricao: aplicacaoProva.descricao,
+        alunoId: usuario.id
+      }
+
+      setAplicacaoProva(aplicacaoProva);
+      setQuestoes(questoesIds);
+      setUsuario(usuario);
+      registrarLog(true, infoProva);
+      setIsLoading(false);
     }
-  }, [props.aplicacaoProvaId]);
+    
+    if (props.aplicacaoProvaId) {
+      getInfo();
+      // getInfoAplicacaoProva();
+    }
+  }, [props]);
 
   if (isLoading) {
-    return <View><Text>Loading...</Text></View>
+    return (
+      <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
+        <ActivityIndicator 
+          size="large"
+          color={"blue"}
+          animating={true}
+          style={{alignSelf: 'center', justifyContent: 'center', position:'absolute'}}
+        />
+      </View>
+    )
   }
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#D8DBDE' }}>
@@ -193,7 +242,7 @@ export default function Questoes(props) {
           }
         </View>
       </View>
-      <AwesomeAlert
+      {/* <AwesomeAlert
         show={alert}
         showProgress={false}
         title={mensagemTitle}
@@ -236,7 +285,7 @@ export default function Questoes(props) {
         onConfirmPressed={() => {
           hideAlert();
         }}
-      />
+      /> */}
     </SafeAreaView>
   )
 }

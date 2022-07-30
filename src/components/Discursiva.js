@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StatusBar, TextInput, Platform } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
 import TipoQuestaoEnum from '../enum/TipoQuestaoEnum';
+import NetInfo from "@react-native-community/netinfo";
+import AsyncStorage from '@react-native-community/async-storage';
 
 export default function Discursiva(props) {
   const [resposta, setResposta] = useState('');
@@ -21,12 +23,18 @@ export default function Discursiva(props) {
       }
     }
 
-    await api
-      .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
-      .then(res => {
-        registrarLog();
-      })
-      .catch(err => console.log(err));
+    let resposta = await AsyncStorage.getItem("respostas").then(res => JSON.parse(res));
+    if (resposta == null) resposta = [];
+
+    resposta.push(alternativaResposta);
+    await AsyncStorage.setItem("respostas", JSON.stringify(resposta));
+    registrarLog();
+    // await api
+    //   .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
+    //   .then(res => {
+    //     registrarLog();
+    //   })
+    //   .catch(err => console.log(err));
   }
 
   const registrarLog = async (tipoQuestaoId = null) => {
@@ -56,7 +64,12 @@ export default function Discursiva(props) {
       createdAt: new Date(),
     };
 
-    await api.post('logRealizacaoProva', log);
+    let resposta = await AsyncStorage.getItem("logRespostas").then(res => JSON.parse(res));
+    if (resposta == null) resposta = [];
+
+    resposta.push(log);
+    await AsyncStorage.setItem("logRespostas", JSON.stringify(resposta));
+    // await api.post('logRealizacaoProva', log);
   }
 
   const replaceCaracteres = async (string) => {
@@ -76,8 +89,26 @@ export default function Discursiva(props) {
         .catch(err => console.log(err));
     }
 
+    const getRespostaQuestaoStorage = async () => {
+      let respostas = await AsyncStorage.getItem("respostas").then(res => JSON.parse(res));
+
+      respostas.find(resp => {
+        if (resp.questaoId == props.questaoId) {
+          if (resp.resposta !== null) {
+            setResposta(resp.resposta);
+          }
+        }
+      })
+    }
+    
     if (props.questaoId && props.alunoId && props.aplicacaoProvaId) {
-      getRespostaQuestao();
+      NetInfo.fetch().then(async (state) => {
+        if (state.isConnected == true) {
+          getRespostaQuestao();
+        } else {
+          getRespostaQuestaoStorage();
+        }
+      })
     }
   }, [props]);
 

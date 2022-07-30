@@ -1,11 +1,13 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-community/async-storage';
 import Alternativa from './Alternativa';
 import Discursiva from './Discursiva';
 import ConteudoQuestao from './ConteudoQuestao';
+import NetInfo from "@react-native-community/netinfo";
+import { useNavigation } from '@react-navigation/core'
 
 export default function Questao(props) {
   const [questao, setQuestao] = useState([]);
@@ -14,6 +16,7 @@ export default function Questao(props) {
   const [anulada, setAnulada] = useState(null);
   const [ordem, setOrdem] = useState(null);
   const [nota, setNota] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const getQuestao = async () => {
@@ -30,13 +33,45 @@ export default function Questao(props) {
         .catch(err => console.log(err));
     }
 
+    const getInfoQuestaoStorage = async () => {
+      const usuario = await AsyncStorage.getItem("usuario").then(res => JSON.parse(res));
+      const questoes = await AsyncStorage.getItem("questoes").then(res => JSON.parse(res));
+
+      const questao = questoes.find(item => item.questaoId == props.questaoId);
+      await AsyncStorage.setItem("questao", JSON.stringify(questao.questao));
+
+      setQuestao(questao.questao);
+      setAlunoId(usuario.id);
+      setIsLoading(false);
+    }
+
     if (props) {
-      getQuestao();
+      if (props.revisao) {
+        getQuestao();
+      } else {
+        NetInfo.fetch().then(async (state) => {
+          if (state.isConnected == true) {
+            navigation.navigate('RealizarProva', { reloadPage: true })
+          } else {
+            getInfoQuestaoStorage();
+          }
+        })
+      }
+
     }
   }, [props]);
 
   if (isLoading) {
-    return <View><Text>Loading...</Text></View>
+    return (
+      <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
+        <ActivityIndicator 
+          size="large"
+          color={"blue"}
+          animating={true}
+          style={{alignSelf: 'center', justifyContent: 'center', position:'absolute'}}
+        />
+      </View>
+    )
   }
   return (
     <SafeAreaView style={{ backgroundColor: '#FFFFFF' }}>

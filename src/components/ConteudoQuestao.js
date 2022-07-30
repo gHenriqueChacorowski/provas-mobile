@@ -1,8 +1,10 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, StatusBar, TextInput, useWindowDimensions } from 'react-native'
+import { View, Text, TouchableOpacity, StatusBar, TextInput, useWindowDimensions, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context';
 import api from '../services/api';
 import RenderHtml from 'react-native-render-html';
+import NetInfo from "@react-native-community/netinfo";
+import AsyncStorage from "@react-native-community/async-storage";
 
 export default function ConteudoQuestao(props) {
   const [isLoading, setIsLoading] = useState(true);
@@ -21,12 +23,29 @@ export default function ConteudoQuestao(props) {
     }
 
     if (props.questaoId) {
-      getTemasQuestao();
+      NetInfo.fetch().then(async (state) => {
+        if (state.isConnected == true) {
+          getTemasQuestao();
+        } else {
+          const questao = await AsyncStorage.getItem("questao").then(res => JSON.parse(res));
+          setTemaQuestao(questao.temaQuestaos[0].tema);
+          setIsLoading(false);
+        }
+      })
     }
   }, [props]);
 
   if (isLoading) {
-    return <View><Text>Loading...</Text></View>
+    return (
+      <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
+        <ActivityIndicator 
+          size="large"
+          color={"blue"}
+          animating={true}
+          style={{alignSelf: 'center', justifyContent: 'center', position:'absolute'}}
+        />
+      </View>
+    )
   }
   return (
     <SafeAreaView style={{ backgroundColor: '#FFFFFF', margin: 5, overflow: 'hidden' }}>

@@ -1,10 +1,12 @@
 import React, { useEffect, useContext, useState, useLayoutEffect } from 'react'
-import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, TextInput, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, ScrollView, useWindowDimensions, TextInput, Platform, ActivityIndicator } from 'react-native'
 import api from '../services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TipoQuestaoEnum from '../enum/TipoQuestaoEnum';
 import Radio from './Radio';
 import CheckBoxComponent from './CheckBoxComponent';
+import NetInfo from "@react-native-community/netinfo";
+import AsyncStorage from '@react-native-community/async-storage';
 
 export default function Alternativa(props) {
   const [somatoria, setSomatoria] = useState(0);
@@ -49,12 +51,18 @@ export default function Alternativa(props) {
       }
     }
 
-    await api
-      .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
-      .then(res => {
-        registrarLog(altSelecionadaId, checkedSomatoria, somat);
-      })
-      .catch(err => console.log(err));
+    let resposta = await AsyncStorage.getItem("respostas").then(res => JSON.parse(res));
+    if (resposta == null) resposta = [];
+
+    resposta.push(alternativaResposta);
+    await AsyncStorage.setItem("respostas", JSON.stringify(resposta));
+    registrarLog(altSelecionadaId, checkedSomatoria, somat);
+    // await api
+    //   .post(`respostaAlunoProva/saveAlternativa`, alternativaResposta)
+    //   .then(res => {
+    //     registrarLog(altSelecionadaId, checkedSomatoria, somat);
+    //   })
+    //   .catch(err => console.log(err));
   }
 
   const checkBoxChecked = async (val, index) => {
@@ -146,7 +154,12 @@ export default function Alternativa(props) {
       createdAt: new Date(),
     };
 
-    await api.post('logRealizacaoProva', log);
+    let resposta = await AsyncStorage.getItem("logRespostas").then(res => JSON.parse(res));
+    if (resposta == null) resposta = [];
+
+    resposta.push(log);
+    await AsyncStorage.setItem("logRespostas", JSON.stringify(resposta));
+    // await api.post('logRealizacaoProva', log);
   }
 
   const getTextoAlternativaById = async (alternativaId) => {
@@ -201,21 +214,80 @@ export default function Alternativa(props) {
         .catch(err => console.log(err));
     }
 
-    if (props.tipoId == TipoQuestaoEnum.PERGUNTA_SOMATORIA) {
-      setSomatoria(0);
-    }
-    if (props.questaoId && props.alunoId && props.aplicacaoProvaId) {
-      getRespostaQuestao();
+    const setValueSomatoria = async () => {
+      const questoes = await AsyncStorage.getItem("questoes").then(res => JSON.parse(res));
+      const questao = questoes.find(item => item.questaoId == props.questaoId);
+      
+      let som = 0;
+      for (const alternativa of questao.questao.alternativas) {
+        if (alternativasMarcadas.includes(alternativa.id)) {
+          som += alternativa.somatoria;
+        }
+      }
+      setSomatoria(som);
+      forceUpdate();
     }
 
-    if (props.alternativas) {
-      setAlternativas(props.alternativas);
-      setIsLoading(false);
+    const getRespostaQuestaoStorage = async (alternativa) => {
+      let respostas = await AsyncStorage.getItem("respostas").then(res => JSON.parse(res));
+      
+      let alt = alternativa;
+      respostas.find(resp => {
+        if (resp.questaoId == props.questaoId) {
+          if (resp.somatoria == null && resp.resposta == null) {
+            setAlternativaSelecionadaId(resp.alternativaQuestaoId);
+          } else if (resp.somatoria != null) {
+            alt.map(a => {
+              if (a.id == resp.alternativaQuestaoId) {
+                if (resp.removeAlternativaSomatoria == false) {
+                  a.checked = true;
+                  alternativasMarcadas.push(a.id);
+                } else if (resp.removeAlternativaSomatoria == true) {
+                  a.checked = false;
+                }
+              } 
+            })
+            setAlternativas(alt);
+            forceUpdate();
+
+            setValueSomatoria();
+          }
+        }
+      })
+    }
+
+    if (props) {
+      if (props.tipoId == TipoQuestaoEnum.PERGUNTA_SOMATORIA) {
+        setSomatoria(0);
+      }
+      if (props.questaoId && props.alunoId && props.aplicacaoProvaId) {
+        NetInfo.fetch().then(async (state) => {
+          if (state.isConnected == true) {
+            getRespostaQuestao();
+          } else {
+            getRespostaQuestaoStorage(props.alternativas);
+          }
+        })
+      }
+  
+      if (props.alternativas) {
+        setAlternativas(props.alternativas);
+        setIsLoading(false);
+      }
     }
   }, [props]);
 
   if (isLoading) {
-    return <View><Text>Loading...</Text></View>
+    return (
+      <View style={{flex:1, alignItems: 'center', justifyContent: 'center'}}>
+        <ActivityIndicator 
+          size="large"
+          color={"blue"}
+          animating={true}
+          style={{alignSelf: 'center', justifyContent: 'center', position:'absolute'}}
+        />
+      </View>
+    )
   }
   return (
     <SafeAreaView style={{ backgroundColor: '#FFFFFF' }}>

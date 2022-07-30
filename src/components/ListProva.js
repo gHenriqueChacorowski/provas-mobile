@@ -16,7 +16,7 @@ export default function ListProva(props) {
         .get(`prova/aplicacaoProva/${id}`)
         .then(res => {
           setProva(res.data)
-          console.log(res.data);
+          console.log('oi');
         })
         .catch(err => console.log(err))
     }
